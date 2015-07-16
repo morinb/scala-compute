@@ -17,35 +17,12 @@
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bm.scalacompute.lexer
-
-import org.bm.scalacompute.lexer.impl.ShuntingYardAlgorithm
+package org.bm.scalacompute.exception
 
 /**
  *
  * @author morinb.
  */
-trait Lexer {
+class MathematicalAnalysisException(message: String) extends RuntimeException(message){
 
-  def parse(formula: String): List[String]
-
-  def isFunctionArgSeparator(item: String): Boolean = ";" == item
-
-  def format(formula: String): String = {
-    var formatted = formula.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")
-
-    Operators.getOperators.foreach(operator =>
-      operator.lowerCaseNames.foreach(name =>
-        formatted = formatted.replace(name, s" $name ")
-      )
-    )
-
-    formatted.replaceAll("\\s+", " ").trim
-
-  }
-
-}
-
-object Lexer {
-  def apply(variablesMap: Map[String, String]) = new ShuntingYardAlgorithm(variablesMap)
 }

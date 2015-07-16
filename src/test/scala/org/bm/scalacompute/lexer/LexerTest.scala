@@ -19,6 +19,7 @@
 
 package org.bm.scalacompute.lexer
 
+import org.bm.scalacompute.lexer.impl.ShuntingYardAlgorithm
 import org.scalatest.FunSuite
 
 /**
@@ -31,13 +32,29 @@ class LexerTest extends FunSuite {
     val formula = "(-3)+x*2/(Z0-5 )^2^y'"
     val expected = "( - 3 ) + x * 2 / ( Z0 - 5 ) ^ 2 ^ y'"
     val lexer = new Lexer {
-      override def parse(formula: String): List[Token] = Nil
+      override def parse(formula: String): List[String] = Nil
     }
 
     val result = lexer.format(formula)
 
     assert(expected === result)
 
+  }
+
+  test("parser") {
+    val wanted = "3 _ x 2 * Z0 5 - 2 35 ^ ^ / +"
+    val formula = "(-3)+x*2/(Z0-5 )^2^y'"
+
+    val variables = Map(
+      "x" -> null,
+      "y'" -> "35",
+      "Z0" -> null,
+      "m" -> null,
+      "g" -> null
+    )
+
+    val lexer = new ShuntingYardAlgorithm(variables)
+    assert(wanted === lexer.parse(formula).mkString(" "))
   }
 
 }
