@@ -26,7 +26,7 @@ import org.scalatest.FunSuite
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 class ConstantTest extends FunSuite {
   val pi: Double = PI()

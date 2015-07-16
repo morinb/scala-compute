@@ -21,15 +21,24 @@ package org.bm.scalacompute.lexer
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 trait Lexer {
 
-  def parse(formula: String) : List[Token]
+  def parse(formula: String): List[Token]
 
 
-  def format(formula: String) : String = {
-    formula
+  def format(formula: String): String = {
+    var formatted = formula.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")
+
+    Operators.getOperators.foreach(operator =>
+      operator.possibleNamesIgnoringCase.foreach(name =>
+        formatted = formatted.replace(name, s" $name ")
+      )
+    )
+
+    formatted.replaceAll("\\s+", " ").trim
+
   }
 
 }

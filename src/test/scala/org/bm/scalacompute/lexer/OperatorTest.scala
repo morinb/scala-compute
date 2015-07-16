@@ -24,7 +24,7 @@ import org.scalatest.FunSuite
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 class OperatorTest extends FunSuite {
 

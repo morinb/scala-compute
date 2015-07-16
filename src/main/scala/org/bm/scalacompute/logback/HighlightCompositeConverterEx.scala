@@ -28,7 +28,7 @@ import org.bm.scalacompute.logback.ANSIColors.Background._
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 class HighlightCompositeConverterEx extends ForegroundCompositeConverterBase[ILoggingEvent] {
   override def getForegroundColorCode(e: ILoggingEvent): String = e.getLevel.toInt match {

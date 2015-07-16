@@ -19,25 +19,25 @@
 
 package org.bm.scalacompute.lexer
 
-import org.bm.scalacompute.lexer.Functions.{EXP, LOG, SQRT}
 import org.scalatest.FunSuite
 
 /**
  *
  * @author morinb.
  */
-class FunctionTest extends FunSuite {
+class LexerTest extends FunSuite {
 
-  test("sqrt") {
-    assert("2.0" === new SQRT().executeMethod(List("4")), "sqrt(4) = 2")
-  }
+  test("testFormat") {
+    val formula = "(-3)+x*2/(Z0-5 )^2^y'"
+    val expected = "( - 3 ) + x * 2 / ( Z0 - 5 ) ^ 2 ^ y'"
+    val lexer = new Lexer {
+      override def parse(formula: String): List[Token] = Nil
+    }
 
-  test("log") {
-    assert("1.0" === new LOG().executeMethod(List("10")), "log(10) = 1")
-  }
+    val result = lexer.format(formula)
 
-  test("exp") {
-    assert("1.0" === new EXP().executeMethod(List("0")), "exp(0) = 1")
+    assert(expected === result)
+
   }
 
 }

@@ -23,7 +23,7 @@ import scala.language.implicitConversions
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 package object lexer {
 
@@ -93,14 +93,15 @@ package object lexer {
   }
 
   trait PossibleNames {
-    def possibleNameIgnoringCase: Seq[String]
+    def possibleNamesIgnoringCase: Seq[String]
   }
 
-  trait Function extends Token with Argumented with Executable
+  trait Function extends Token with Argumented with Executable with PossibleNames
 
-  trait Operator extends Token with Associative with Argumented with Precedence with Executable
+  trait Operator extends Token with Associative with Argumented with Precedence with Executable with PossibleNames
 
-  trait Constant extends Token with PossibleNames with Value with DoubleValue { self =>
+  trait Constant extends Token with PossibleNames with Value with DoubleValue {
+    self =>
     override lazy val value: String = self.doubleValue.toString
   }
 
@@ -108,27 +109,33 @@ package object lexer {
     private[this] var functions = List[Function]()
 
     def addFunctions(fs: Function*): Unit = {
-      fs foreach(f => functions = f :: functions)
+      fs foreach (f => functions = f :: functions)
     }
 
     def getFunctions: Seq[Function] = functions
 
-    case class SQRT() extends Function with MonoArgument {
+    case class SQRT() extends Function with MonoArgument with PossibleNames  {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => Math.sqrt(Seq.head.toDouble).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("sqrt")
     }
 
-    case class LOG() extends Function with MonoArgument {
+    case class LOG() extends Function with MonoArgument with PossibleNames  {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => Math.log10(Seq.head.toDouble).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("log")
     }
 
-    case class EXP() extends Function with MonoArgument {
+    case class EXP() extends Function with MonoArgument with PossibleNames  {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => Math.exp(Seq.head.toDouble).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("exp")
     }
 
   }
@@ -144,8 +151,8 @@ package object lexer {
     def getOperators: Seq[Operator] = operators
 
     addOperators(PLUS(), MINUS(), TIMES(), DIVIDE(), NEGATE(), MODULO(), POWER())
-    
-    
+
+
     implicit def enrichDouble(d: Double): RichDouble = new RichDouble(d)
 
     class RichDouble(d: Double) {
@@ -154,55 +161,70 @@ package object lexer {
       }
     }
 
-    case class PLUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract {
+    case class PLUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with PossibleNames {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).sum.toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("+")
     }
 
-    case class MINUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract {
+    case class MINUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with PossibleNames {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(0.0)(_ - _).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("-")
     }
 
-    case class TIMES() extends Operator with DualArguments with LeftAssociative with PrecedenceMulDivMod {
+    case class TIMES() extends Operator with DualArguments with LeftAssociative with PrecedenceMulDivMod with PossibleNames {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldLeft(1.0)(_ * _).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("*")
     }
 
-    case class DIVIDE() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod {
+    case class DIVIDE() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with PossibleNames {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(1.0)(_ / _).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("/")
     }
 
-    case class NEGATE() extends Operator with LeftAssociative with MonoArgument with PrecedenceForUnary {
+    case class NEGATE() extends Operator with LeftAssociative with MonoArgument with PrecedenceForUnary with PossibleNames {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => (-Seq.head.toDouble).toString)
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("-")
     }
 
-    case class MODULO() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod {
+    case class MODULO() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with PossibleNames {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber) { Seq =>
           val op = Seq.map(_.toDouble)
           (op(0) % op(1)).toString
         }
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("%")
     }
 
-    case class POWER() extends Operator with RightAssociative with DualArguments with PrecedenceForUnary {
+    case class POWER() extends Operator with RightAssociative with DualArguments with PrecedenceForUnary with PossibleNames {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(1.0)(_ ** _).toString) // use implicit to convert to RichDouble which defines ** method
+
+      override def possibleNamesIgnoringCase: Seq[String] = Seq("^")
     }
+
 
   }
 
@@ -218,13 +240,13 @@ package object lexer {
     addConstants(PI(), PHI(), GAMMA())
 
     case class PI() extends Constant {
-      override def possibleNameIgnoringCase: Seq[String] = List("pi")
+      override def possibleNamesIgnoringCase: Seq[String] = List("pi")
 
       override val doubleValue: Double = Math.PI
     }
 
     case class E() extends Constant {
-      override def possibleNameIgnoringCase: Seq[String] = List("e")
+      override def possibleNamesIgnoringCase: Seq[String] = List("e")
 
       override val doubleValue: Double = Math.E
     }
@@ -232,13 +254,13 @@ package object lexer {
     case class PHI() extends Constant {
       override val doubleValue: Double = (1 + Math.sqrt(5)) / 2
 
-      override def possibleNameIgnoringCase: Seq[String] = List("phi", "?", "?", "?")
+      override def possibleNamesIgnoringCase: Seq[String] = List("phi", "?", "?", "?")
     }
 
     case class GAMMA() extends Constant {
       override val doubleValue: Double = 0.5772156649015329
 
-      override def possibleNameIgnoringCase: Seq[String] = List("gamma", "?")
+      override def possibleNamesIgnoringCase: Seq[String] = List("gamma", "?")
 
     }
 

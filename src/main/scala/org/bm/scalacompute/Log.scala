@@ -23,7 +23,7 @@ import org.slf4j.{LoggerFactory, Logger}
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 trait Log {
   lazy val log: Logger = LoggerFactory.getLogger(getClass.getName)
