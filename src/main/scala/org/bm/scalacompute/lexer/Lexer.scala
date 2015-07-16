@@ -19,9 +19,7 @@
 
 package org.bm.scalacompute.lexer
 
-import java.lang.NumberFormatException
-
-import org.bm.scalacompute.impl.ShuntingYardAlgorithm
+import org.bm.scalacompute.lexer.impl.ShuntingYardAlgorithm
 
 /**
  *
@@ -31,7 +29,7 @@ trait Lexer {
 
   def parse(formula: String): List[String]
 
-  def isFunctionArgSeparator(item: String): Boolean =  ";" == item
+  def isFunctionArgSeparator(item: String): Boolean = ";" == item
 
   def format(formula: String): String = {
     var formatted = formula.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")

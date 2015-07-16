@@ -17,8 +17,7 @@
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bm.scalacompute.impl
-
+package org.bm.scalacompute.lexer.impl
 
 import org.bm.scalacompute.Log
 import org.bm.scalacompute.exception.MathematicalAnalysisException
@@ -32,12 +31,12 @@ import scala.collection.mutable
  */
 class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer with Log {
   override def parse(formula: String): List[String] = {
-    if (log.isInfoEnabled) {
-      log.info(s"Formula: $formula")
+    if (log.isDebugEnabled) {
+      log.debug(s"Formula: $formula")
     }
     val formattedFormula = format(formula)
-    if (log.isInfoEnabled) {
-      log.info(s"Formatted formula: $formattedFormula")
+    if (log.isDebugEnabled) {
+      log.debug(s"Formatted formula: $formattedFormula")
     }
 
 
@@ -62,19 +61,19 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
 
     items.foreach { item =>
 
-      if (log.isInfoEnabled) {
-        log.info(s"Analyzing item '$item'")
+      if (log.isDebugEnabled) {
+        log.debug(s"Analyzing item '$item'")
       }
       if (isNumber(item)) {
-        if (log.isInfoEnabled) {
-          log.info(s"Item '$item' is a number. adding to Queue")
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' is a number. adding to Queue")
         }
         queue = item :: queue
         lastItem = item
 
       } else if (isVariable(item)) {
-        if (log.isInfoEnabled) {
-          log.info(s"Item '$item' is a variable. Adding to Queue")
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' is a variable. Adding to Queue")
         }
         variablesMap.get(item) match {
           case Some(value) => queue = if (value != null) parse(value) ::: queue else item :: queue
@@ -82,15 +81,15 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
         }
 
       } else if (isOperator(item)) {
-        if (log.isInfoEnabled) {
-          log.info(s"Item '$item' is an operator")
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' is an operator")
         }
         val token: String = if ("(" == lastItem) {
 
           if ("-" == item) {
             // Not subtraction but negate operator
-            if (log.isInfoEnabled) {
-              log.info(s"Item '$item' is the negate operator")
+            if (log.isDebugEnabled) {
+              log.debug(s"Item '$item' is the negate operator")
             }
             "_"
           } else {
@@ -109,43 +108,43 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
 
           if ((op1.precedence <= op2.precedence && op1.leftAssociative) ||
             (op1.precedence < op2.precedence && op1.rightAssociative)) {
-            if (log.isInfoEnabled) {
+            if (log.isDebugEnabled) {
               if (op1.leftAssociative) {
-                log.info(s"Item '$token' priority is <= '$peek' priority and '$token' is left-associative")
+                log.debug(s"Item '$token' priority is <= '$peek' priority and '$token' is left-associative")
               } else {
-                log.info(s"Item '$token' priority is <= '$peek' priority and '$token' is right-associative")
+                log.debug(s"Item '$token' priority is <= '$peek' priority and '$token' is right-associative")
               }
-              log.info(s"Popping '$peek' from the stack, and adding it to the queue.")
+              log.debug(s"Popping '$peek' from the stack, and adding it to the queue.")
             }
 
             queue = stack.pop() :: queue
           } else {
             if (op1.precedence > op2.precedence) {
-              if (log.isInfoEnabled) {
-                log.info(s"Item '$token' priority is > '$peek' priority")
+              if (log.isDebugEnabled) {
+                log.debug(s"Item '$token' priority is > '$peek' priority")
               }
             }
           }
         }
-        if (log.isInfoEnabled) {
-          log.info(s"Pushing '$token' onto the stack")
+        if (log.isDebugEnabled) {
+          log.debug(s"Pushing '$token' onto the stack")
         }
         stack.push(token)
       } else if (isFunction(item)) {
-        if (log.isInfoEnabled) {
-          log.info(s"Item '$item' is a function. Pushing onto the stack")
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' is a function. Pushing onto the stack")
         }
         stack.push(item)
         lastItem = item
       } else if (isFunctionArgSeparator(item)) {
-        if (log.isInfoEnabled) {
-          log.info(s"Item '$item' is a function arg separator")
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' is a function arg separator")
         }
 
         while (stack.nonEmpty && "(" != stack.top) {
           val pop = stack.pop()
-          if (log.isInfoEnabled) {
-            log.info(s"Pop '$pop' from the stack, adding it to the queue")
+          if (log.isDebugEnabled) {
+            log.debug(s"Pop '$pop' from the stack, adding it to the queue")
           }
           queue = pop :: queue
           if (stack.isEmpty) {
@@ -154,37 +153,37 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
         }
         lastItem = item
       } else if ("(" == item) {
-        if (log.isInfoEnabled) {
-          log.info(s"Pushing '$item' onto the stack")
+        if (log.isDebugEnabled) {
+          log.debug(s"Pushing '$item' onto the stack")
         }
         stack.push(item)
         lastItem = item
 
       } else if (")" == item) {
-        if (log.isInfoEnabled) {
-          log.info(s"Until ( is found on the stack, pop token from the stack to the queue")
+        if (log.isDebugEnabled) {
+          log.debug(s"Until ( is found on the stack, pop token from the stack to the queue")
         }
         while ("(" != stack.top) {
           val pop = stack.pop()
-          if (log.isInfoEnabled) {
-            log.info(s"\tAdding '$pop' to the queue")
+          if (log.isDebugEnabled) {
+            log.debug(s"\tAdding '$pop' to the queue")
           }
           queue = pop :: queue
         }
-        if (log.isInfoEnabled) {
-          log.info(s"( found. Dismiss from the stack.")
+        if (log.isDebugEnabled) {
+          log.debug(s"( found. Dismiss from the stack.")
           stack.pop()
         }
         if (stack.nonEmpty && isFunction(stack.top)) {
           val peek = stack.top
-          if (log.isInfoEnabled) {
-            log.info(s"Item '$peek' is a function, pop it from the stack to the queue")
+          if (log.isDebugEnabled) {
+            log.debug(s"Item '$peek' is a function, pop it from the stack to the queue")
           }
           queue = stack.pop() :: queue
         }
       } else {
-        if (log.isInfoEnabled) {
-          log.info(s"Item '$item' unknown. Maybe a variable ? Added to queue")
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' unknown. Maybe a variable ? Added to queue")
         }
         queue = item :: queue
       }
@@ -192,8 +191,8 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
     }
 
 
-    if (log.isInfoEnabled) {
-      log.info(s"No more item to read")
+    if (log.isDebugEnabled) {
+      log.debug(s"No more item to read")
     }
 
     while (stack.nonEmpty) {
@@ -201,8 +200,8 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
         throw new MathematicalAnalysisException("Error C : parenthesis problem.")
       }
       val pop = stack.pop()
-      if (log.isInfoEnabled) {
-        log.info(s"Popping '$pop' from the stack to the queue")
+      if (log.isDebugEnabled) {
+        log.debug(s"Popping '$pop' from the stack to the queue")
       }
       queue = pop :: queue
     }

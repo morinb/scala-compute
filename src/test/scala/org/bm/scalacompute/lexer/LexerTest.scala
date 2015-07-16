@@ -19,7 +19,7 @@
 
 package org.bm.scalacompute.lexer
 
-import org.bm.scalacompute.impl.ShuntingYardAlgorithm
+import org.bm.scalacompute.lexer.impl.ShuntingYardAlgorithm
 import org.scalatest.FunSuite
 
 /**
