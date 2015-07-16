@@ -23,7 +23,7 @@ import scala.language.implicitConversions
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 package object lexer {
 
