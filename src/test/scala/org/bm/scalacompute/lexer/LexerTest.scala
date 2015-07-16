@@ -19,25 +19,24 @@
 
 package org.bm.scalacompute.lexer
 
+import org.scalatest.FunSuite
+
 /**
  *
  * @author morinb.
  */
-trait Lexer {
+class LexerTest extends FunSuite {
 
-  def parse(formula: String): List[Token]
+  test("testFormat") {
+    val formula = "(-3)+x*2/(Z0-5 )^2^y'"
+    val expected = "( - 3 ) + x * 2 / ( Z0 - 5 ) ^ 2 ^ y'"
+    val lexer = new Lexer {
+      override def parse(formula: String): List[Token] = Nil
+    }
 
+    val result = lexer.format(formula)
 
-  def format(formula: String): String = {
-    var formatted = formula.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")
-
-    Operators.getOperators.foreach(operator =>
-      operator.possibleNamesIgnoringCase.foreach(name =>
-        formatted = formatted.replace(name, s" $name ")
-      )
-    )
-
-    formatted.replaceAll("\\s+", " ").trim
+    assert(expected === result)
 
   }
 

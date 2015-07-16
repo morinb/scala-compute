@@ -21,10 +21,10 @@ package org.bm.scalacompute.logback
 
 /**
  *
- * @author 408658.
+ * @author morinb.
  */
 object ANSIColors {
-  val ESC_START = "\033["
+  val ESC_START = "\u001b["
   val ESC_END = "m"
 
   object Style {
