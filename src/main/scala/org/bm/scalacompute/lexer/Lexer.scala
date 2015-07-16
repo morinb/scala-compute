@@ -19,20 +19,25 @@
 
 package org.bm.scalacompute.lexer
 
+import java.lang.NumberFormatException
+
+import org.bm.scalacompute.impl.ShuntingYardAlgorithm
+
 /**
  *
  * @author morinb.
  */
 trait Lexer {
 
-  def parse(formula: String): List[Token]
+  def parse(formula: String): List[String]
 
+  def isFunctionArgSeparator(item: String): Boolean =  ";" == item
 
   def format(formula: String): String = {
     var formatted = formula.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")
 
     Operators.getOperators.foreach(operator =>
-      operator.possibleNamesIgnoringCase.foreach(name =>
+      operator.lowerCaseNames.foreach(name =>
         formatted = formatted.replace(name, s" $name ")
       )
     )
@@ -41,4 +46,8 @@ trait Lexer {
 
   }
 
+}
+
+object Lexer {
+  def apply(variablesMap: Map[String, String]) = new ShuntingYardAlgorithm(variablesMap)
 }

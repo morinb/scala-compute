@@ -17,44 +17,10 @@
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bm.scalacompute.lexer
-
-import org.bm.scalacompute.impl.ShuntingYardAlgorithm
-import org.scalatest.FunSuite
+package org.bm.scalacompute.exception
 
 /**
  *
  * @author morinb.
  */
-class LexerTest extends FunSuite {
-
-  test("testFormat") {
-    val formula = "(-3)+x*2/(Z0-5 )^2^y'"
-    val expected = "( - 3 ) + x * 2 / ( Z0 - 5 ) ^ 2 ^ y'"
-    val lexer = new Lexer {
-      override def parse(formula: String): List[String] = Nil
-    }
-
-    val result = lexer.format(formula)
-
-    assert(expected === result)
-
-  }
-
-  test("parser") {
-    val wanted = "3 _ x 2 * Z0 5 - 2 35 ^ ^ / +"
-    val formula = "(-3)+x*2/(Z0-5 )^2^y'"
-
-    val variables = Map(
-      "x" -> null,
-      "y'" -> "35",
-      "Z0" -> null,
-      "m" -> null,
-      "g" -> null
-    )
-
-    val lexer = new ShuntingYardAlgorithm(variables)
-    assert(wanted === lexer.parse(formula).mkString(" "))
-  }
-
-}
+class IllegalTokenException(val message: String) extends RuntimeException(message)
