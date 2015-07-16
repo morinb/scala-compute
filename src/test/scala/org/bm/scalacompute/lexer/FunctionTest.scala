@@ -19,7 +19,7 @@
 
 package org.bm.scalacompute.lexer
 
-import org.bm.scalacompute.lexer.Functions.{EXP, LOG, SQRT}
+import org.bm.scalacompute.Functions.{EXP, LOG, SQRT}
 import org.scalatest.FunSuite
 
 /**

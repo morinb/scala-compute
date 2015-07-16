@@ -19,7 +19,8 @@
 
 package org.bm.scalacompute.lexer
 
-import org.bm.scalacompute.lexer.Operators._
+import org.bm.scalacompute._
+import org.bm.scalacompute.Operators._
 import org.scalatest.FunSuite
 
 /**

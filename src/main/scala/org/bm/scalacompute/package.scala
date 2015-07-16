@@ -17,18 +17,41 @@
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bm.scalacompute
+package org.bm
 
 import scala.language.implicitConversions
+import scala.collection.mutable
 
 /**
  *
  * @author morinb.
  */
-package object lexer {
+package object scalacompute {
+  def isVariable(item: String, map: Map[String, String]): Boolean = map.contains(item)
+  def isOperator(item: String): Boolean = Operators.operatorsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
+  def isFunction(item: String): Boolean = Functions.functionsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
+  def isNumber(item: String): Boolean = try {
+    item.toDouble
+    true
+  } catch {
+    case _: Throwable => false
+  }
 
   object Implicits {
     implicit def constantToDouble(c: Constant): Double = c.doubleValue
+    implicit def enrichDouble(d: Double): RichDouble = new RichDouble(d)
+
+    class RichDouble(d: Double) {
+      def **(other: Double): Double = {
+        Math.pow(d, other)
+      }
+    }
+
+    implicit def enrichStack[T](s: mutable.Stack[T]): RichMutableStack[T] = new RichMutableStack[T](s)
+
+    class RichMutableStack[T](s: mutable.Stack[T]) {
+      def popx(nb: Int): Seq[T] = for(i <- 0 until nb) yield s.pop()
+    }
   }
 
   trait Token
@@ -168,6 +191,7 @@ package object lexer {
 
     def getOperators: Seq[Operator] = operators
 
+    // order is important, MINUS() must be before NEGATE()
     addOperators(PLUS(), MINUS(), TIMES(), DIVIDE(), NEGATE(), MODULO(), POWER())
 
     def apply(name: String): Operator = {
@@ -175,14 +199,6 @@ package object lexer {
       require(v.size < 2, s"Found more than one operator for name '$name'")
       require(v.nonEmpty, s"Found no operator for name '$name'")
       v.head._2
-    }
-
-    implicit def enrichDouble(d: Double): RichDouble = new RichDouble(d)
-
-    class RichDouble(d: Double) {
-      def **(other: Double): Double = {
-        Math.pow(d, other)
-      }
     }
 
     case class PLUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with LowerCaseNames {
@@ -226,7 +242,7 @@ package object lexer {
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => (-Seq.head.toDouble).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("-")
+      override def lowerCaseNames: Seq[String] = Seq("_")
     }
 
     case class MODULO() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with LowerCaseNames {
@@ -243,6 +259,7 @@ package object lexer {
     case class POWER() extends Operator with RightAssociative with DualArguments with PrecedenceForUnary with LowerCaseNames {
       self =>
 
+      import Implicits.enrichDouble
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(1.0)(_ ** _).toString) // use implicit to convert to RichDouble which defines ** method
 

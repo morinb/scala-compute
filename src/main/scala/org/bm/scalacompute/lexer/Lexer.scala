@@ -19,6 +19,7 @@
 
 package org.bm.scalacompute.lexer
 
+import org.bm.scalacompute.Operators
 import org.bm.scalacompute.lexer.impl.ShuntingYardAlgorithm
 
 /**

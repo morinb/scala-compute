@@ -19,9 +19,9 @@
 
 package org.bm.scalacompute.lexer.impl
 
-import org.bm.scalacompute.Log
 import org.bm.scalacompute.exception.MathematicalAnalysisException
-import org.bm.scalacompute.lexer.{Lexer, _}
+import org.bm.scalacompute.lexer.Lexer
+import org.bm.scalacompute.{Log, _}
 
 import scala.collection.mutable
 
@@ -49,16 +49,6 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
     val stack: mutable.Stack[String] = mutable.Stack()
     var lastItem: String = ""
 
-    def isVariable(item: String): Boolean = variablesMap.contains(item)
-    def isOperator(item: String): Boolean = Operators.operatorsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
-    def isFunction(item: String): Boolean = Functions.functionsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
-    def isNumber(item: String): Boolean = try {
-      item.toDouble
-      true
-    } catch {
-      case _: Throwable => false
-    }
-
     items.foreach { item =>
 
       if (log.isDebugEnabled) {
@@ -71,7 +61,7 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
         queue = item :: queue
         lastItem = item
 
-      } else if (isVariable(item)) {
+      } else if (isVariable(item, variablesMap)) {
         if (log.isDebugEnabled) {
           log.debug(s"Item '$item' is a variable. Adding to Queue")
         }
@@ -172,8 +162,8 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
         }
         if (log.isDebugEnabled) {
           log.debug(s"( found. Dismiss from the stack.")
-          stack.pop()
         }
+        stack.pop()
         if (stack.nonEmpty && isFunction(stack.top)) {
           val peek = stack.top
           if (log.isDebugEnabled) {
