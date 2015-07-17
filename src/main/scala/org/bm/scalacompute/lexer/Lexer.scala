@@ -26,7 +26,7 @@ import org.bm.scalacompute.lexer.impl.ShuntingYardAlgorithm
  *
  * @author morinb.
  */
-trait Lexer {
+private[scalacompute] trait Lexer {
 
   def parse(formula: String): List[String]
 
@@ -36,9 +36,8 @@ trait Lexer {
     var formatted = formula.replace("(", " ( ").replace(")", " ) ").replace(",", " , ")
 
     Operators.getOperators.foreach(operator =>
-      operator.lowerCaseNames.foreach(name =>
-        formatted = formatted.replace(name, s" $name ")
-      )
+      formatted = formatted.replace(operator.lowerCaseName, s" ${operator.lowerCaseName} ")
+
     )
 
     formatted.replaceAll("\\s+", " ").trim
@@ -47,6 +46,6 @@ trait Lexer {
 
 }
 
-object Lexer {
+private[scalacompute] object Lexer {
   def apply(variablesMap: Map[String, String]) = new ShuntingYardAlgorithm(variablesMap)
 }
