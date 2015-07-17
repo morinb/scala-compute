@@ -17,27 +17,15 @@
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bm.scalacompute.lexer
+package org.bm.scalacompute
 
-import org.bm.scalacompute.Functions.{EXP, LOG, SQRT}
-import org.scalatest.FunSuite
+import org.bm.scalacompute.evaluator.Evaluator
+import org.bm.scalacompute.lexer.Lexer
 
 /**
  *
  * @author morinb.
  */
-class FunctionTest extends FunSuite {
-
-  test("sqrt") {
-    assert("2.0" === new SQRT().executeMethod(List("4")), "sqrt(4) = 2")
-  }
-
-  test("log") {
-    assert("1.0" === new LOG().executeMethod(List("10")), "log(10) = 1")
-  }
-
-  test("exp") {
-    assert("1.0" === new EXP().executeMethod(List("0")), "exp(0) = 1")
-  }
-
+object Compute {
+  def compute(formula: String, variableMap: Map[String, String]):String = Evaluator().eval(Lexer(variableMap).parse(formula))
 }
