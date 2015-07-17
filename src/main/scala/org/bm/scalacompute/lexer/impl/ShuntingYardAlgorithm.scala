@@ -19,6 +19,7 @@
 
 package org.bm.scalacompute.lexer.impl
 
+import org.bm.scalacompute.Operators.{MINUS, NEGATE}
 import org.bm.scalacompute.exception.MathematicalAnalysisException
 import org.bm.scalacompute.lexer.Lexer
 import org.bm.scalacompute.{Log, _}
@@ -29,7 +30,7 @@ import scala.collection.mutable
  *
  * @author morinb.
  */
-class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer with Log {
+private[scalacompute] class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer with Log {
   override def parse(formula: String): List[String] = {
     if (log.isDebugEnabled) {
       log.debug(s"Formula: $formula")
@@ -66,22 +67,32 @@ class ShuntingYardAlgorithm(val variablesMap: Map[String, String]) extends Lexer
           log.debug(s"Item '$item' is a variable. Adding to Queue")
         }
         variablesMap.get(item) match {
-          case Some(value) => queue = if (value != null) parse(value) ::: queue else item :: queue
+          case Some(value) =>
+            queue = if (value != null) {
+              val res = Compute.compute(value, variablesMap)
+              res :: queue
+            } else item :: queue
           case None => queue = item :: queue
         }
 
+      } else if (isConstant(item)) {
+        if (log.isDebugEnabled) {
+          log.debug(s"Item '$item' is a constant. Replacing and adding to queue")
+        }
+        val constant = Constants(item)
+        queue = constant.value :: queue
       } else if (isOperator(item)) {
         if (log.isDebugEnabled) {
           log.debug(s"Item '$item' is an operator")
         }
         val token: String = if ("(" == lastItem) {
 
-          if ("-" == item) {
+          if (MINUS.lowerCaseName == item) {
             // Not subtraction but negate operator
             if (log.isDebugEnabled) {
               log.debug(s"Item '$item' is the negate operator")
             }
-            "_"
+            NEGATE.lowerCaseName
           } else {
             item
           }

@@ -41,8 +41,8 @@ class LexerTest extends FunSuite {
 
   }
 
-  test("parser") {
-    val wanted = "3 _ x 2 * Z0 5 - 2 35 ^ ^ / +"
+  test("(-3)+x*2/(Z0-5 )^2^y'") {
+    val wanted = "3 ~ x 2 * Z0 5 - 2 35 ^ ^ / +"
     val formula = "(-3)+x*2/(Z0-5 )^2^y'"
 
     val variables = Map(
@@ -53,8 +53,51 @@ class LexerTest extends FunSuite {
       "g" -> null
     )
 
-    val lexer = new ShuntingYardAlgorithm(variables)
+    val lexer = Lexer(variables)
     assert(wanted === lexer.parse(formula).mkString(" "))
   }
+
+  test("~3+x*2/(Z0-5 )^2^y'") {
+    val wanted = "3 ~ x 2 * Z0 5 - 2 35 ^ ^ / +"
+    val formula = "(-3)+x*2/(Z0-5 )^2^y'"
+
+    val variables = Map(
+      "x" -> null,
+      "y'" -> "35",
+      "Z0" -> null,
+      "m" -> null,
+      "g" -> null
+    )
+
+    val lexer = Lexer(variables)
+    assert(wanted === lexer.parse(formula).mkString(" "))
+  }
+
+  test("5+((1+2)*4)-3") {
+    val formula = "5+((1+2)*4)-3"
+    val wanted = "5 1 2 + 4 * + 3 -"
+
+    val lexer = Lexer(Map())
+    assert(wanted === lexer.parse(formula).mkString(" "))
+  }
+
+  test("sqrt((1/2)*(m*g)^2+log(m) + exp(g)) | y' = 35") {
+    val wanted = "1 2 / m g * 2 ^ m log + g exp + * sqrt"
+    val formula = "sqrt((1/2)*(m*g)^2+log(m) + exp(g))"
+
+    val variables = Map(
+      "x" -> null,
+      "y'" -> "35",
+      "Z0" -> null,
+      "m" -> null,
+      "g" -> null
+    )
+
+
+    val lexer = Lexer(variables)
+
+    assert(wanted === lexer.parse(formula).mkString(" "))
+  }
+
 
 }

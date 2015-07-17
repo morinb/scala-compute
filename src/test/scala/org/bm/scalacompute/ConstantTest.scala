@@ -17,29 +17,52 @@
  *     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
-package org.bm.scalacompute.evaluator.impl
+package org.bm.scalacompute
 
-import org.bm.scalacompute.evaluator.Evaluator
+import org.bm.scalacompute.Constants.{E, GAMMA, PHI, PI}
+import org.bm.scalacompute.Implicits._
 import org.scalatest.FunSuite
 
 /**
  *
  * @author morinb.
  */
-class EvaluatorTest extends FunSuite {
+class ConstantTest extends FunSuite {
+  val pi: Double = PI
+  val e: Double = E
+  val phi: Double = PHI
+  val gamma: Double = GAMMA
 
-  test("testEval") {
-    val formula = List("3", "4", "-")
-    val expected = "-1.0"
+  val threshold: Double = 0.00005
 
-    assert(expected === Evaluator().eval(formula))
+  test("pi") {
+    assert(Math.PI === pi)
   }
 
-  test("testEval_2") {
-    val formula = List("10", "log")
-    val expected = "1.0"
+  test("e") {
+    assert(Math.E === e)
+  }
 
-    assert(expected === Evaluator().eval(formula))
+  test("phi") {
+    assert(((Math.sqrt(5) + 1) / 2) === phi)
+  }
+
+  test("gamma") {
+    assert(0.5772156649015329 === gamma)
+  }
+
+  test("phi**2 = 1+phi") {
+    val phi2 = Math.pow(phi, 2)
+    val phi1 = 1 + phi
+
+    assert(phi1 === phi2)
+  }
+
+  test("pi/6+phi**2 ~ pi") {
+    val pi_6 = pi / 6
+    val phi2 = 1 + phi // See test above
+
+    assert(pi_6 + phi2 - pi < threshold)
   }
 
 }

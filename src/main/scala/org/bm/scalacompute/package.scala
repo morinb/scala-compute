@@ -19,8 +19,10 @@
 
 package org.bm
 
-import scala.language.implicitConversions
+import org.bm.scalacompute.evaluator.Evaluator
+
 import scala.collection.mutable
+import scala.language.implicitConversions
 
 /**
  *
@@ -28,8 +30,13 @@ import scala.collection.mutable
  */
 package object scalacompute {
   def isVariable(item: String, map: Map[String, String]): Boolean = map.contains(item)
+
+  def isConstant(item: String): Boolean = Constants.constantsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
+
   def isOperator(item: String): Boolean = Operators.operatorsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
+
   def isFunction(item: String): Boolean = Functions.functionsWithName.exists(tuple => tuple._1.contains(item.toLowerCase))
+
   def isNumber(item: String): Boolean = try {
     item.toDouble
     true
@@ -39,6 +46,7 @@ package object scalacompute {
 
   object Implicits {
     implicit def constantToDouble(c: Constant): Double = c.doubleValue
+
     implicit def enrichDouble(d: Double): RichDouble = new RichDouble(d)
 
     class RichDouble(d: Double) {
@@ -50,14 +58,25 @@ package object scalacompute {
     implicit def enrichStack[T](s: mutable.Stack[T]): RichMutableStack[T] = new RichMutableStack[T](s)
 
     class RichMutableStack[T](s: mutable.Stack[T]) {
-      def popx(nb: Int): Seq[T] = for(i <- 0 until nb) yield s.pop()
+      def popUntilEqualsTo(item: T): Seq[T] = {
+        var accu: List[T] = Nil
+        do {
+          accu = s.pop :: accu
+        } while (s.top != item)
+
+        accu
+      }
+
+      def popx(nb: Int): Seq[T] = for (i <- 0 until nb) yield s.pop()
     }
+
   }
 
   trait Token
 
   trait Associative {
     def leftAssociative: Boolean
+
     def rightAssociative = !leftAssociative
   }
 
@@ -79,6 +98,10 @@ package object scalacompute {
 
   trait DualArguments extends Argumented {
     def argsNumber = 2
+  }
+
+  trait ManyArguments extends Argumented {
+    def argsNumber = -1
   }
 
   trait Precedence {
@@ -107,10 +130,6 @@ package object scalacompute {
     def executeMethod: (Seq[String]) => String
   }
 
-  case class NumberToken(value: String) extends Token with Value
-
-  case class UnknownToken(value: String) extends Token with Value
-
   trait Value {
     val value: String
   }
@@ -119,22 +138,22 @@ package object scalacompute {
     val doubleValue: Double
   }
 
-  trait LowerCaseNames {
-    def lowerCaseNames: Seq[String]
+  trait LowerCaseName {
+    def lowerCaseName: String
   }
 
-  trait Function extends Token with Argumented with Executable with LowerCaseNames
+  trait Function extends Token with Argumented with Executable with LowerCaseName
 
-  trait Operator extends Token with Associative with Argumented with Precedence with Executable with LowerCaseNames
+  trait Operator extends Token with Associative with Argumented with Precedence with Executable with LowerCaseName
 
-  trait Constant extends Token with LowerCaseNames with Value with DoubleValue {
+  trait Constant extends Token with LowerCaseName with Value with DoubleValue {
     self =>
     override lazy val value: String = self.doubleValue.toString
   }
 
   object Functions {
 
-    def functionsWithName: Seq[(Seq[String], Function)] = getFunctions.map(func => (func.lowerCaseNames, func))
+    def functionsWithName: Seq[(String, Function)] = getFunctions.map(func => (func.lowerCaseName, func))
 
     def apply(name: String): Function = {
       val v = functionsWithName.filter(tuple => tuple._1.contains(name.toLowerCase))
@@ -149,39 +168,39 @@ package object scalacompute {
       fs foreach (f => functions = f :: functions)
     }
 
-    addFunctions(SQRT(), LOG(), EXP())
+    addFunctions(SQRT, LOG, EXP)
 
     def getFunctions: Seq[Function] = functions
 
-    case class SQRT() extends Function with MonoArgument with LowerCaseNames {
+    object SQRT extends Function with MonoArgument with LowerCaseName {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => Math.sqrt(Seq.head.toDouble).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("sqrt")
+      override def lowerCaseName: String = "sqrt"
     }
 
-    case class LOG() extends Function with MonoArgument with LowerCaseNames {
+    object LOG extends Function with MonoArgument with LowerCaseName {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => Math.log10(Seq.head.toDouble).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("log")
+      override def lowerCaseName: String = "log"
     }
 
-    case class EXP() extends Function with MonoArgument with LowerCaseNames {
+    object EXP extends Function with MonoArgument with LowerCaseName {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => Math.exp(Seq.head.toDouble).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("exp")
+      override def lowerCaseName: String = "exp"
     }
 
   }
 
   object Operators {
 
-    def operatorsWithName: Seq[(Seq[String], Operator)] = getOperators.map(op => (op.lowerCaseNames, op))
+    def operatorsWithName: Seq[(String, Operator)] = getOperators.map(op => (op.lowerCaseName, op))
 
     private[this] var operators = List[Operator]()
 
@@ -192,7 +211,7 @@ package object scalacompute {
     def getOperators: Seq[Operator] = operators
 
     // order is important, MINUS() must be before NEGATE()
-    addOperators(PLUS(), MINUS(), TIMES(), DIVIDE(), NEGATE(), MODULO(), POWER())
+    addOperators(PLUS, MINUS, TIMES, DIVIDE, NEGATE, MODULO, POWER)
 
     def apply(name: String): Operator = {
       val v = operatorsWithName.filter(tuple => tuple._1.contains(name.toLowerCase))
@@ -201,51 +220,51 @@ package object scalacompute {
       v.head._2
     }
 
-    case class PLUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with LowerCaseNames {
+    object PLUS extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with LowerCaseName {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).sum.toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("+")
+      override def lowerCaseName: String = "+"
     }
 
-    case class MINUS() extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with LowerCaseNames {
+    object MINUS extends Operator with LeftAssociative with DualArguments with PrecedenceAdditonSubtract with LowerCaseName {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(0.0)(_ - _).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("-")
+      override def lowerCaseName: String = "-"
     }
 
-    case class TIMES() extends Operator with DualArguments with LeftAssociative with PrecedenceMulDivMod with LowerCaseNames {
+    object TIMES extends Operator with DualArguments with LeftAssociative with PrecedenceMulDivMod with LowerCaseName {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldLeft(1.0)(_ * _).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("*")
+      override def lowerCaseName: String = "*"
     }
 
-    case class DIVIDE() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with LowerCaseNames {
+    object DIVIDE extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with LowerCaseName {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(1.0)(_ / _).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("/")
+      override def lowerCaseName: String = "/"
     }
 
-    case class NEGATE() extends Operator with LeftAssociative with MonoArgument with PrecedenceForUnary with LowerCaseNames {
+    object NEGATE extends Operator with LeftAssociative with MonoArgument with PrecedenceForUnary with LowerCaseName {
       self =>
 
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(Seq => (-Seq.head.toDouble).toString)
 
-      override def lowerCaseNames: Seq[String] = Seq("_")
+      override def lowerCaseName: String = "~"
     }
 
-    case class MODULO() extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with LowerCaseNames {
+    object MODULO extends Operator with LeftAssociative with DualArguments with PrecedenceMulDivMod with LowerCaseName {
       self =>
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber) { Seq =>
@@ -253,17 +272,18 @@ package object scalacompute {
           (op(0) % op(1)).toString
         }
 
-      override def lowerCaseNames: Seq[String] = Seq("%")
+      override def lowerCaseName: String = "%"
     }
 
-    case class POWER() extends Operator with RightAssociative with DualArguments with PrecedenceForUnary with LowerCaseNames {
+    object POWER extends Operator with RightAssociative with DualArguments with PrecedenceForUnary with LowerCaseName {
       self =>
 
       import Implicits.enrichDouble
+
       override def executeMethod: (Seq[String]) => String =
         calc(self.getClass.getName, _, argsNumber)(_.map(_.toDouble).foldRight(1.0)(_ ** _).toString) // use implicit to convert to RichDouble which defines ** method
 
-      override def lowerCaseNames: Seq[String] = Seq("^")
+      override def lowerCaseName: String = "^"
     }
 
 
@@ -272,36 +292,45 @@ package object scalacompute {
   object Constants {
     private[this] var constants = List[Constant]()
 
+    def constantsWithName: Seq[(String, Constant)] = getConstants.map(op => (op.lowerCaseName, op))
+
     def addConstants(cs: Constant*): Unit = {
       cs foreach (c => constants = c :: constants)
     }
 
     def getConstants: Seq[Constant] = constants
 
-    addConstants(PI(), PHI(), GAMMA())
+    def apply(name: String): Constant = {
+      val v = constantsWithName.filter(tuple => tuple._1.contains(name.toLowerCase))
+      require(v.size < 2, s"Found more than one constant for name '$name'")
+      require(v.nonEmpty, s"Found no constant for name '$name'")
+      v.head._2
+    }
 
-    case class PI() extends Constant {
-      override def lowerCaseNames: Seq[String] = List("pi")
+    addConstants(PI, PHI, GAMMA)
+
+    object PI extends Constant {
+      override def lowerCaseName: String = "pi"
 
       override val doubleValue: Double = Math.PI
     }
 
-    case class E() extends Constant {
-      override def lowerCaseNames: Seq[String] = List("e")
+    object E extends Constant {
+      override def lowerCaseName: String = "e"
 
       override val doubleValue: Double = Math.E
     }
 
-    case class PHI() extends Constant {
+    object PHI extends Constant {
       override val doubleValue: Double = (1 + Math.sqrt(5)) / 2
 
-      override def lowerCaseNames: Seq[String] = List("phi", "?", "?", "?")
+      override def lowerCaseName: String = "phi"
     }
 
-    case class GAMMA() extends Constant {
+    object GAMMA extends Constant {
       override val doubleValue: Double = 0.5772156649015329
 
-      override def lowerCaseNames: Seq[String] = List("gamma", "?")
+      override def lowerCaseName: String = "gamma"
 
     }
 

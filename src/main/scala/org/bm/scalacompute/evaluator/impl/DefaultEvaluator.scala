@@ -30,7 +30,7 @@ import scala.collection.mutable
  *
  * @author morinb.
  */
-class DefaultEvaluator extends Evaluator {
+private[scalacompute] class DefaultEvaluator extends Evaluator {
   override def eval(items: List[String]): String = {
     val stack: mutable.Stack[String] = new mutable.Stack()
 
@@ -39,7 +39,11 @@ class DefaultEvaluator extends Evaluator {
 
       if (isFunction(item)) {
         val function = Functions(item)
-        stack.push(function.executeMethod(stack.popx(function.argsNumber).reverse.toList))
+        function match {
+          case f: ManyArguments => stack.push(function.executeMethod(stack.popUntilEqualsTo(")")))
+          case f: Function => stack.push(function.executeMethod(stack.popx(function.argsNumber).reverse.toList))
+        }
+
       } else if (isOperator(item)) {
         val operator = Operators(item)
         stack.push(operator.executeMethod(stack.popx(operator.argsNumber).reverse.toList))

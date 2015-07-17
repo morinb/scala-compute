@@ -19,10 +19,17 @@
 
 package org.bm.scalacompute.evaluator
 
+import org.bm.scalacompute.evaluator.impl.DefaultEvaluator
+
 /**
  *
  * @author morinb.
  */
-trait Evaluator {
+private[scalacompute] trait Evaluator {
   def eval(items: List[String]): String
+}
+
+private[scalacompute] object Evaluator {
+  def apply():Evaluator = new DefaultEvaluator
+
 }
